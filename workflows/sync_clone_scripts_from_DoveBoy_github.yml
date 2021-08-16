@@ -1,0 +1,37 @@
+name: sync_clone_scripts_from_DoveBoy_github
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/30 * * * *'
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    if: github.repository == 'lan-tianxiang/clone_scripts'
+    steps:
+    - name: Init Build Dependencies
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo -E rm -rf /etc/apt/sources.list.d
+        sudo -E apt-get update -y
+        sudo -E apt-get install -y build-essential git git-core curl wget jq
+        sudo -E apt-get clean -y
+        git config --global user.name 'lxk0301' && git config --global user.email 'lxk0301@gitee.com'
+
+    - name: Get Code
+      run: |
+        git clone -b master https://github.com/DoveBoy/a.git master
+    - name: Push Code
+      uses: ad-m/github-push-action@master
+      with:
+        directory: master
+        github_token: ${{ secrets.HUB_TOKEN }}
+        branch: master
+        force: true
+    - name: Delete Workflow Runs
+      uses: Mattraks/delete-workflow-runs@main
+      with:
+        token: ${{ github.token }}
+        repository: ${{ github.repository }}
+        retain_days: 1
+        keep_minimum_runs: 0
